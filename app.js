@@ -47,6 +47,18 @@ bot.on("message", async (message) => {
                 .addField(PREFIX + "dance", "I dance for u.")
                 .addField(PREFIX + "joke", "I tell a joke.")
                 .addField(PREFIX + "cat", "I send u a cat photo.")
+                .addField(PREFIX + "voiceping", "I ping everyone in your voice channel.")
+                .addField(
+                    PREFIX + "cap [# of captains] except @User1 @User2",
+                    "I pick team captains randomly from your voice channel. Optionally, to exclude specific users, type 'except' and @mention them in the message." +
+                    "\n E.g: '" +
+                    PREFIX +
+                    "cap 2' or '" +
+                    PREFIX +
+                    "cap 2 except @" +
+                    message.author.username +
+                    "'"
+                )
                 .addField(
                     PREFIX + "randomteams [# of teams] [name 1],[name 2],...,[name n]",
                     "I generate random teams from a given list of players separated by commas.\n E.g.: '" +
@@ -98,7 +110,7 @@ bot.on("message", async (message) => {
                     "http://api.giphy.com/v1/gifs/random?api_key=VvFigFsfhXlS3ZZws76zv9qgJ3hBvUpB&tag=dancing&rating=pg"
                 );
                 let danceResponse = response.data;
-                console.log(danceResponse) ;
+                console.log(danceResponse);
                 message.channel.send(danceResponse.data.embed_url);
             } catch (err) {
                 console.log(err)
@@ -132,7 +144,7 @@ bot.on("message", async (message) => {
                     "https://api.thecatapi.com/v1/images/search?size=full"
                 );
                 let catResponse = response.data[0];
-                console.log(catResponse) ;
+                console.log(catResponse);
                 let catEmbed = new Discord.MessageEmbed()
                     .setImage(catResponse.url)
                     .setColor(0xde78e3);
@@ -234,7 +246,7 @@ bot.on("message", async (message) => {
             break;
         case "rtv":
         case "randomteamsvoice":
-            //Will randomly separate a usrs in voice channel evenly into a specified number of teams (up to 5 teams)
+            //Will randomly separate users in voice channel evenly into a specified number of teams (up to 50 teams)
 
             //Check if user is in a voice channel
             if (!message.member.voice.channel) {
@@ -269,7 +281,7 @@ bot.on("message", async (message) => {
                 var errMessage =
                     "You can only make between 1 and 50 teams.\nE.g.: " +
                     PREFIX +
-                    "randomteamsvoice 50";
+                    "randomteamsvoice 2";
                 if (excludeOn) {
                     errMessage += " except <@" + message.author.id + ">";
                 }
@@ -345,6 +357,141 @@ bot.on("message", async (message) => {
             message.channel.send(team_embed2);
 
             break;
+        case "cap":
+            //Will randomly pick captains from the user's voice channel
+
+            //Check if user is in a voice channel
+            if (!message.member.voice.channel) {
+                message.channel.send(
+                    "You need to be in a voice channel to do this. :("
+                );
+                return;
+            }
+            //check if argument is a number
+            console.log(message.content);
+            console.log(message.mentions.users);
+            console.log(args.length);
+            console.log("Num teams " + args[1]);
+
+            var numcaps = parseInt(args[1]);
+            var excludeOn = message.content.includes("except");
+
+            if (!Number.isInteger(numcaps)) {
+                var errMessage =
+                    "Provide the number of captains you want to pick (1 through 50).\nE.g.: " +
+                    PREFIX +
+                    "cap 2";
+                if (excludeOn) {
+                    errMessage += " except <@" + message.author.id + ">";
+                }
+                message.channel.send(errMessage);
+                return;
+            }
+
+            //Check if argument is between 1 and 5
+            if (!(numcaps >= 1 && numcaps <= 50)) {
+                var errMessage =
+                    "You can only pick between 1 and 50 captains.\nE.g.: " +
+                    PREFIX +
+                    "cap 2";
+                if (excludeOn) {
+                    errMessage += " except <@" + message.author.id + ">";
+                }
+                message.channel.send(errMessage);
+                return;
+            }
+
+            if (excludeOn && message.mentions.users.size == 0) {
+                message.channel.send(
+                    "It looks like you tried to exclude people but didn't @ mention anyone (you can exclude multiple people too by just @ing them all). Try: " +
+                    PREFIX +
+                    "cap 2 except <@" +
+                    message.author.id +
+                    ">"
+                );
+            }
+
+            var filtered = []; // from voice channel
+
+            message.member.voice.channel.members.forEach(function (
+                guildMember,
+                guildMemberId
+            ) {
+                console.log(guildMemberId, guildMember.user.username);
+                if (!guildMember.user.bot) {
+                    //No bots and exclude any mentions
+                    if (excludeOn) {
+                        if (!message.mentions.users.has(guildMemberId)) {
+                            filtered.push("<@" + guildMemberId + ">");
+                        }
+                    } else {
+                        filtered.push("<@" + guildMemberId + ">");
+                    }
+                }
+            });
+
+            if (filtered.length == 0) {
+                message.channel.send(
+                    "There are no available humans in your voice channel, uwu."
+                );
+                return;
+            }
+            if (filtered.length < numcaps) {
+                message.channel.send(
+                    "There aren't enough available players in your channel to pick that many captains, :(."
+                );
+                return;
+            }
+
+            //randomize array
+            shuffle(filtered);
+
+            let team_embed3 = new Discord.MessageEmbed()
+                .setTitle("Team Captains")
+                .setColor(0xe748f0)
+                .setThumbnail(
+                    "https://vignette.wikia.nocookie.net/leagueoflegends/images/1/1e/UWU_Emote.png/revision/latest?cb=20190917205601"
+                );
+
+            for (var i = 0; i < numcaps; i++) {
+                team_embed3.addField("Captain " + (i + 1), filtered[i]);
+            }
+            message.channel.send(team_embed3);
+
+            break;
+        case "voiceping":
+            //Will randomly separate a usrs in voice channel evenly into a specified number of teams (up to 5 teams)
+
+            //Check if user is in a voice channel
+            if (!message.member.voice.channel) {
+                message.channel.send(
+                    "You need to be in a voice channel to do this. :("
+                );
+                return;
+            }
+
+            let resp = ""
+
+            message.member.voice.channel.members.forEach(function (
+                guildMember,
+                guildMemberId
+            ) {
+                console.log(guildMemberId, guildMember.user.username);
+                if (!guildMember.user.bot) {
+                    resp = resp + guildMember.toString() + " ";
+                }
+            });
+
+            if (resp == "") {
+                message.channel.send(
+                    "There are no available humans in your voice channel, uwu."
+                );
+                return;
+            }
+
+            message.channel.send(resp);
+
+            break;
         //----- MUSIC BOT THINGS -----\\
         case "play":
             function play(connection, message) {
@@ -355,7 +502,7 @@ bot.on("message", async (message) => {
                 });
                 console.log("ATTEMPT PLAY: " + server.queue[0]);
                 server.dispatcher = connection.play(stream).on("error", error => console.error(error));
-                
+
                 server.queue.shift();
 
                 server.dispatcher.on("finish", function () {
