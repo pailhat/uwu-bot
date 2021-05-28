@@ -254,7 +254,7 @@ bot.on("message", async (message) => {
 
             if (!Number.isInteger(numteams)) {
                 var errMessage =
-                    "Provide the number of teams you want to make (1 through 5).\nE.g.: " +
+                    "Provide the number of teams you want to make (1 through 50).\nE.g.: " +
                     PREFIX +
                     "randomteamsvoice 2";
                 if (excludeOn) {
@@ -265,11 +265,11 @@ bot.on("message", async (message) => {
             }
 
             //Check if argument is between 1 and 5
-            if (!(numteams >= 1 && numteams <= 5)) {
+            if (!(numteams >= 1 && numteams <= 50)) {
                 var errMessage =
-                    "You can only make between 1 and 5 teams.\nE.g.: " +
+                    "You can only make between 1 and 50 teams.\nE.g.: " +
                     PREFIX +
-                    "randomteamsvoice 5";
+                    "randomteamsvoice 50";
                 if (excludeOn) {
                     errMessage += " except <@" + message.author.id + ">";
                 }
